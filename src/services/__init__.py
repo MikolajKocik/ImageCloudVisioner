@@ -1,0 +1,1 @@
+from .image_process_service import analyze_image, recognize_image
