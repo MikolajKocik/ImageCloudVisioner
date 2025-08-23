@@ -1,19 +1,26 @@
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
+from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes, ReadResult, ReadOperationResult
+from azure.cognitiveservices.vision.computervision.models import ImageAnalysis
 from msrest.authentication import CognitiveServicesCredentials
-from config.azure_key_vault import secret_client
-from typing import Dict
+from config.azure_key_vault import load_keyvault
+from src.models import ImageInsights
 import time
+from io import BytesIO # image has binary data
+from typing import List
+from functools import lru_cache
 
+# create a computer client once per app
+@lru_cache()
 def get_computer_vision_client() -> ComputerVisionClient:
-    endpoint = secret_client.get_secret("VAULT_URL")
-    key = secret_client.get_secret("Azure--subscriptionIdentifier")
+    secret_client = load_keyvault()
+    endpoint = secret_client.get_secret("Azure--ComputerVisionEndpoint")
+    key = secret_client.get_secret("Azure--ComputerVisionKey")
     return ComputerVisionClient(endpoint, CognitiveServicesCredentials(key))
 
-def analyze_image(image_path) -> Dict:
-    # load image
-    with open(image_path, "rb") as image_stream:
-        analysis = get_computer_vision_client().analyze_image_in_stream(
+def analyze_image(image_stream: BytesIO) -> ImageInsights:
+    try:
+        # load stream
+        analysis: ImageAnalysis = get_computer_vision_client().analyze_image_in_stream(
             image_stream,
             visual_features=[
                 VisualFeatureTypes.description,
@@ -21,46 +28,54 @@ def analyze_image(image_path) -> Dict:
                 VisualFeatureTypes.color
             ]
         )
-    
-    # result is dict
-    result = {}
+        
+        description = (
+            analysis.description.captions[0].text
+            if analysis.description and analysis.description.captions
+            else "Not available"
+        )
 
-    # Safely print description
-    if analysis.description and analysis.description.captions:
-        result["description"] = analysis.description.captions[0].text
-    else:
-        result["description"] = "Not available"
+        tags = [tag.name for tag in analysis.tags] if analysis.tags else []
+        
+        colors = analysis.color.dominant_colors if analysis.color and analysis.color.dominant_colors else []
 
-    # Safely print tags
-    if hasattr(analysis, 'tags') and analysis.tags: 
-        result["tags"] = [tag.name for tag in analysis.tags]
-    else:
-        result["tags"] = []
-    # Safely print dominant colors
-    if hasattr(analysis, 'color') and hasattr(analysis.color, 'dominant_colors'):
-        result["colors"] = analysis.color.dominant_colors
-    else:
-        result["colors"] = []
+        return ImageInsights(
+            analysis=analysis,
+            description=description,
+            tags=tags,
+            colors=colors
+        )
+    except Exception as e:
+        raise RuntimeError(f"Azure vision failed: {e}")
 
-    return result
-
-def recognize_image(image_path) -> None:
-    with open(image_path, "rb") as image_stream: 
+def recognize_image(image_stream: BytesIO) -> List[str]: 
+    try:   
         ocr_result = get_computer_vision_client().read_in_stream(image_stream, raw=True)
 
-    # get operation by id
-    operation_location = ocr_result.headers["Operation-Location"]
-    operation_id = operation_location.split("/")[-1]
+        # get operation by id
+        operation_location: str = ocr_result.headers["Operation-Location"]
+        operation_id = operation_location.split("/")[-1]
 
-    # wait for result
-    while True:
-        result = get_computer_vision_client().get_read_result(operation_id)
-        if result.status not in ['notStarted', 'running']:
-            break
-        time.sleep(1)
-    
-    # show text
-    if result.status == 'succeeded':
-        for page in result.analyze_result.read_results:
-            for line in page.lines:
-                print(line.text)
+        timeout = 30
+        start_time = time.time()
+
+        # wait for result
+        while True:
+            result: ReadOperationResult = get_computer_vision_client().get_read_result(operation_id)
+            if result.status not in ['notStarted', 'running']:
+                break
+            if time.time() - start_time > timeout:
+                raise TimeoutError("OCR operation timed out")
+            time.sleep(1)
+        
+        # show text
+        lines = []
+        if result.status == 'succeeded':
+            for page in result.analyze_result.read_results:
+                page: ReadResult
+                for line in page.lines:
+                    lines.append(line.text)
+        
+        return lines
+    except Exception as e:
+        raise RuntimeError(f"OCR operation failed: {e}")

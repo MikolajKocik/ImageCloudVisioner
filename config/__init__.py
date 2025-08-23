@@ -1,1 +1,1 @@
-from .azure_key_vault import VAULT_URL, credential, secret_client
+from .azure_key_vault import load_keyvault

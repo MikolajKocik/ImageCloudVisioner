@@ -3,12 +3,12 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-load_dotenv()
+def load_keyvault() -> SecretClient:
+    load_dotenv()
+    vault_url = os.getenv("VAULT_URL")
+    if vault_url is None:
+        raise EnvironmentError('VAULT_URL is not set in .env file')
 
-VAULT_URL = os.getenv("VAULT_URL")
-if VAULT_URL is None:
-    raise EnvironmentError('VAULT_URL is not set in .env file')
+    credential = DefaultAzureCredential()
 
-credential = DefaultAzureCredential()
-
-secret_client = SecretClient(vault_url=VAULT_URL, credential=credential)
+    return SecretClient(vault_url=vault_url, credential=credential)
