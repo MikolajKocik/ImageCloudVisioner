@@ -6,7 +6,8 @@ from azure.keyvault.secrets import SecretClient
 load_dotenv()
 
 VAULT_URL = os.getenv("VAULT_URL")
-assert VAULT_URL, 'VAULT_URL is not set in .env'
+if VAULT_URL is None:
+    raise EnvironmentError('VAULT_URL is not set in .env file')
 
 credential = DefaultAzureCredential()
 
