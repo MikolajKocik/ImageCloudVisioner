@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from endpoints import image
+from .endpoints import image
 
 app = FastAPI(
     title="Image Cloud Visioner API",
@@ -18,6 +18,6 @@ app.add_middleware(
 
 app.include_router(image.router, prefix="/image", tags=["Image Processing"])
 
-app.get("/")
+@app.get("/")
 async def root():
     return {"message": "Image Cloud Visioner API is running"}

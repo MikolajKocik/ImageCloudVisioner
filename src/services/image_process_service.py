@@ -3,7 +3,7 @@ from azure.cognitiveservices.vision.computervision.models import VisualFeatureTy
 from azure.cognitiveservices.vision.computervision.models import ImageAnalysis
 from msrest.authentication import CognitiveServicesCredentials
 from config.azure_key_vault import load_keyvault
-from models import ImageInsights
+from ..models.image_insights import ImageInsights
 import time
 from io import BytesIO # image has binary data
 from typing import List
