@@ -54,7 +54,7 @@ def recognize_image(image_stream: BytesIO) -> List[str]:
 
         # get operation by id
         operation_location: str = ocr_result.headers["Operation-Location"]
-        operation_id = operation_location.split("/")[-1]
+        operation_id = operation_location.split("/")[-1] # the las element in the collection is id so [-1]
 
         timeout = 30
         start_time = time.time()

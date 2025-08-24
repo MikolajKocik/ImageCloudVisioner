@@ -17,7 +17,7 @@ async def analyze(file: UploadFile = File(...)) -> ImageInsights:
         raise HTTPException(status_code=500, detail="Invalid image or request")
     
 @router.post("/ocr", response_model=List[str])
-async def ocr(file: UploadFile = File(...)):
+async def ocr(file: UploadFile = File(...)) -> List[str]:
     try:
         image_stream = BytesIO(await file.read())
         return recognize_image(image_stream)
