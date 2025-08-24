@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from src.services.image_process_service import analyze_image, recognize_image
-from src.models.image_insights import ImageInsights
+from services.image_process_service import analyze_image, recognize_image
+from models.image_insights import ImageInsights
 from io import BytesIO
 from typing import List
 

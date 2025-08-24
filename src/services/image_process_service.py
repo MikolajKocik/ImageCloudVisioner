@@ -3,13 +3,13 @@ from azure.cognitiveservices.vision.computervision.models import VisualFeatureTy
 from azure.cognitiveservices.vision.computervision.models import ImageAnalysis
 from msrest.authentication import CognitiveServicesCredentials
 from config.azure_key_vault import load_keyvault
-from src.models import ImageInsights
+from models import ImageInsights
 import time
 from io import BytesIO # image has binary data
 from typing import List
 from functools import lru_cache
 
-# create a computer client once per app
+# create a computer vision client once per app using caching
 @lru_cache()
 def get_computer_vision_client() -> ComputerVisionClient:
     secret_client = load_keyvault()
