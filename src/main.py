@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .endpoints import image
+from dotenv import load_dotenv
 
 app = FastAPI(
     title="Image Cloud Visioner API",
@@ -15,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+load_dotenv()
 
 app.include_router(image.router, prefix="/image", tags=["Image Processing"])
 

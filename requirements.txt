@@ -6,3 +6,4 @@ azure-identity
 azure-keyvault-secrets
 msrest
 python-dotenv
+requests
