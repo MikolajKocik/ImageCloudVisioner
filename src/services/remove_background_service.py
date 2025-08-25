@@ -10,6 +10,7 @@ def remove_background(image_stream: BytesIO) -> BytesIO:
         data={"size": "auto"},
         headers={"X-Api-Key": api_key},
     )
+
     if response.status_code == 200:
         return BytesIO(response.content)
     else:
