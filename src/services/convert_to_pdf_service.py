@@ -10,7 +10,7 @@ def convert_to_pdf(image_stream: BytesIO) -> BytesIO:
         image.convert("RGB").save(output_stream, format="PDF")
         output_stream.seek(0)
 
-        return output_stream.read()
+        return output_stream
     
     except UnidentifiedImageError:
         raise HTTPException(status_code=400, detail="Uploaded file is not a valid image format")

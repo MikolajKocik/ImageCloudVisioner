@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  image-cloud-visioner:
+    restart: unless-stopped
+    ports: 
+      - "8080:8080"
+    env_file: .env
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: image-visioner-app
+    volumes:
+      - ./logs:/app/logs:rw
+      - ./cache:/app/cache:rw
+      - ./uploads:/app/uploads:rw

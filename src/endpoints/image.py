@@ -52,8 +52,8 @@ async def remove_bg(file: UploadFile = File(...)) -> Response:
         return Response(
             content=result_stream.getvalue(),
             media_type="image/png",
-            headers={"Content-Disposition": "attachment; filename=removed-bg.png"
-        })
+            headers={"Content-Disposition": "attachment; filename=removed-bg.png"}
+        )
     
     except UnidentifiedImageError:
         raise HTTPException(status_code=400, detail="Uploaded file is not a valid image format")

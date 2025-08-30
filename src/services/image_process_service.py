@@ -50,16 +50,17 @@ def analyze_image(image_stream: BytesIO) -> ImageInsights:
 
 def recognize_image(image_stream: BytesIO) -> List[str]: 
     try:   
+        # --- Stage 1: Submit the OCR job to the cloud service ---
+        # This sends the image for processing and retrieves a unique operation ID.
         ocr_result = get_computer_vision_client().read_in_stream(image_stream, raw=True)
-
-        # get operation by id
         operation_location: str = ocr_result.headers["Operation-Location"]
         operation_id = operation_location.split("/")[-1] # the las element in the collection is id so [-1]
 
         timeout = 30
         start_time = time.time()
 
-        # wait for result
+        # --- Stage 2: Poll the service until the OCR job is complete ---
+        # The loop checks the status of the operation using its ID, waiting for it to finish.   
         while True:
             result: ReadOperationResult = get_computer_vision_client().get_read_result(operation_id)
             if result.status not in ['notStarted', 'running']:
@@ -68,7 +69,8 @@ def recognize_image(image_stream: BytesIO) -> List[str]:
                 raise TimeoutError("OCR operation timed out")
             time.sleep(1)
         
-        # show text
+        # --- Stage 3: Extract and format the recognized text ---
+        # This section retrieves the processed data and extracts the text lines from the results.
         lines = []
         if result.status == 'succeeded':
             for page in result.analyze_result.read_results:
@@ -77,5 +79,6 @@ def recognize_image(image_stream: BytesIO) -> List[str]:
                     lines.append(line.text)
         
         return lines
+    
     except Exception as e:
         raise RuntimeError(f"OCR operation failed: {e}")
